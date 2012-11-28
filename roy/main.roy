@@ -1,0 +1,21 @@
+//let scene = $.parseJSON('{"name":"John"}')
+
+//type Person = {firstName: String, lastName: String}
+
+//instance reverse = Reverser Person {
+//  reverser: \x -> {firstName: x.firstName, lastName: x.lastName}
+//}
+
+//let reversed (x: Person) = {firstName: x.lastName, lastName: y.firstName}
+
+type Vector = { x: Number, y: Number, z: Number }
+
+let mult a b = a * b
+let op (f: Function(Number, Number, Number))(a: Vector)(b: Vector) = { x: (f a.x b.x), y: (f a.y b.y), z: (f a.z b.z) }
+
+let vec1 = { x: 1, y: 2, z: 3 }
+let vec2 = { x: 2, y: 3, z: 4 }
+
+let result = op(mult)(vec1)(vec2)
+console.log result
+
