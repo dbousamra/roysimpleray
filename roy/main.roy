@@ -10,12 +10,15 @@
 
 type Vector = { x: Number, y: Number, z: Number }
 
-let mult a b = a * b
+let mult a b = op(\x y -> x * y)(a)(b)
+let add a b = op(\x y -> x + y)(a)(b)
 let op (f: Function(Number, Number, Number))(a: Vector)(b: Vector) = { x: (f a.x b.x), y: (f a.y b.y), z: (f a.z b.z) }
 
 let vec1 = { x: 1, y: 2, z: 3 }
 let vec2 = { x: 2, y: 3, z: 4 }
 
-let result = op(mult)(vec1)(vec2)
-console.log result
+let multed = mult(vec1)(vec2)
+let added = add(vec1)(vec2)
+console.log added
+console.log multed
 
