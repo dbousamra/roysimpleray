@@ -1,24 +1,48 @@
-//let scene = $.parseJSON('{"name":"John"}')
-
-//type Person = {firstName: String, lastName: String}
-
-//instance reverse = Reverser Person {
-//  reverser: \x -> {firstName: x.firstName, lastName: x.lastName}
-//}
-
-//let reversed (x: Person) = {firstName: x.lastName, lastName: y.firstName}
-
 type Vector = { x: Number, y: Number, z: Number }
+type Color  = { red: Number, green: Number, blue: Number }
+type Light  = { position: Vector, color: Color }
+type Ray    = { position: Vector, direction: Color }
+type Sphere = { position: Vector, radius: Number, color: Color, diffuse: Color }
+type Scene  = { eye: Vector, objects: [Sphere], lights: [Light], ambientLight: Light }
 
-let mult a b = op(\x y -> x * y)(a)(b)
-let add a b = op(\x y -> x + y)(a)(b)
-let op (f: Function(Number, Number, Number))(a: Vector)(b: Vector) = { x: (f a.x b.x), y: (f a.y b.y), z: (f a.z b.z) }
+typeclass VectorFuncs #a {
+  mult:  Function(#a, #a, #a)
+  add:   Function(#a, #a, #a)
+  sub:   Function(#a, #a, #a)
+  div:   Function(#a, #a, #a)
+  multD: Function(#a, Number, #a)
+  divD:  Function(#a, Number, #a)
+  dot:   Function(#a, #a, Number)
+}
+
+instance colorsWithFuncs = VectorFuncs Color {
+  mult: \color1 color2 -> { 
+    red: (color1.red * color2.red)
+    green: (color1.green * color2.green)
+    blue: (color1.blue * color2.blue) 
+  }
+  add: \color1 color2 -> { 
+    red: (color1.red + color2.red)
+    green: (color1.green + color2.green)
+    blue: (color1.blue + color2.blue) 
+  }
+  multD: \color1 double -> { 
+    red: (color1.red * double)
+    green: (color1.green * double)
+    blue: (color1.blue * double) 
+  }
+}
+
+instance vectorsWithFuncs = VectorFuncs Vector {
+  mult:  \vec1 vec2 -> { x: (vec1.x * vec2.x), y: (vec1.y * vec2.y), z: (vec1.z * vec2.z) }
+  add:   \vec1 vec2 -> { x: (vec1.x + vec2.x), y: (vec1.y + vec2.y), z: (vec1.z + vec2.z) }
+  sub:   \vec1 vec2 -> { x: (vec1.x - vec2.x), y: (vec1.y - vec2.y), z: (vec1.z - vec2.z) }
+  div:   \vec1 vec2 -> { x: (vec1.x / vec2.x), y: (vec1.y / vec2.y), z: (vec1.z / vec2.z) }
+  multD: \vec1 double -> { x: (vec1.x * double), y: (vec1.y * double), z: (vec1.z * double) }
+  divD:  \vec1 double -> { x: (vec1.x * double), y: (vec1.y * double), z: (vec1.z * double) }
+  dot:   \vec1 vec2 -> (vec1.x * vec2.x) + (vec1.y * vec2.y) + (vec1.z * vec2.z)
+}
 
 let vec1 = { x: 1, y: 2, z: 3 }
 let vec2 = { x: 2, y: 3, z: 4 }
-
-let multed = mult(vec1)(vec2)
-let added = add(vec1)(vec2)
-console.log added
-console.log multed
 
