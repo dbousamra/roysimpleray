@@ -8,12 +8,13 @@ let sphere1 = {
 }
 let light1 = {
   position: { x: 4, y: 5, z: 6 }
-  color: { r: 22, g: 33, b: 33 }
+  color: { red: 22, green: 33, blue: 33 }
 }
 let ambientLight1 = {
   position: { x: 4, y: 5, z: 6 }
-  color: { r: 22, g: 33, b: 33 }
+  color: { red: 22, green: 33, blue: 33 }
 }
 let ray1 = { position: { x: 2, y: 3, z: 4 }, direction: { x: 1, y: 2, z: 3 } }
-console.log (scene.intersectRay(ray1)(sphere1))
-console.log (scene.computeColor(12)(ray1)(sphere1)(light1)(ambientLight1))
+
+let finalColor = scene.computeColor(12)(ray1)(sphere1)(light1)(ambientLight1)
+console.log finalColor

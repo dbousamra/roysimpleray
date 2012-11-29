@@ -48,7 +48,7 @@ instance vectorOps = Ops Vector {
   sub:   \vec1 vec2 -> { x: (vec1.x - vec2.x), y: (vec1.y - vec2.y), z: (vec1.z - vec2.z) }
   div:   \vec1 vec2 -> { x: (vec1.x / vec2.x), y: (vec1.y / vec2.y), z: (vec1.z / vec2.z) }
   multD: \vec1 double -> { x: (vec1.x * double), y: (vec1.y * double), z: (vec1.z * double) }
-  divD:  \vec1 double -> { x: (vec1.x * double), y: (vec1.y * double), z: (vec1.z * double) }
+  divD:  \vec1 double -> { x: (vec1.x / double), y: (vec1.y / double), z: (vec1.z / double) }
   dot:   \vec1 vec2 -> (vec1.x * vec2.x) + (vec1.y * vec2.y) + (vec1.z * vec2.z)
 }
 
@@ -64,21 +64,24 @@ let intersectRay (ray:Ray)(sphere:Sphere): Number =
   else 
     (Number.POSITIVE_INFINITY)
 
-let length vec1 vec2 = Math.sqrt(lengthSquared(vec1)(vec2))
-let normal vec1 vec2 = div(vec1)(length)
-let lengthSquared vec1 vec2 = 
-  let t = mult(vec1)(vec2)
+let length vec1 = Math.sqrt(lengthSquared(vec1))
+let normal vec1 = divD(vec1)(length(vec1))
+let lengthSquared (vec1: Vector) = 
+  let t = mult(vec1)(vec1)
   t.x + t.y + t.z 
 
-
-let computeColor (hitAngle: Number)(ray: Ray)(sphere: Sphere)(light: Light)(ambientLight: Light): Number = 
+let computeColor (hitAngle: Number)(ray: Ray)(sphere: Sphere)(light: Light)(ambientLight: Light) = 
   if hitAngle == (Number.POSITIVE_INFINITY) then
-    0
+    { red: 0, green: 0, blue: 0}
   else
     let vectorCoefficent = multD(add(ray.position)(ray.direction))(hitAngle)
-    let lightCoefficent = sub(light.position)(sphere.position)
-    console.log vectorCoefficent
-    1
+    let lightCoefficent = normal(sub(light.position)(sphere.position))
+    let positionCoefficient = normal(sub(vectorCoefficent)(sphere.position))
+    let t = mult(lightCoefficent)(positionCoefficient)
+    let shadedCoefficient = t.x + t.y + t.z 
+    //Is this LISP?
+    mult(sphere.color)(add(multD(light.color)(Math.max shadedCoefficient 0))(ambientLight.color)) 
+
 
 export intersectRay
 export computeColor
