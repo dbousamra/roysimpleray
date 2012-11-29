@@ -1,21 +1,21 @@
 type Vector = { x: Number, y: Number, z: Number }
 type Color  = { red: Number, green: Number, blue: Number }
 type Light  = { position: Vector, color: Color }
-type Ray    = { position: Vector, direction: Color }
+type Ray    = { position: Vector, direction: Vector }
 type Sphere = { position: Vector, radius: Number, color: Color, diffuse: Color }
 type Scene  = { eye: Vector, objects: [Sphere], lights: [Light], ambientLight: Light }
 
-typeclass VectorFuncs #a {
-  mult:  Function(#a, #a, #a)
-  add:   Function(#a, #a, #a)
-  sub:   Function(#a, #a, #a)
-  div:   Function(#a, #a, #a)
-  multD: Function(#a, Number, #a)
-  divD:  Function(#a, Number, #a)
-  dot:   Function(#a, #a, Number)
+typeclass Ops #a {
+  mult:     Function(#a, #a, #a)
+  add:      Function(#a, #a, #a)
+  sub:      Function(#a, #a, #a)
+  div:      Function(#a, #a, #a)
+  multD:    Function(#a, Number, #a)
+  divD:     Function(#a, Number, #a)
+  dot:      Function(#a, #a, Number)
 }
 
-instance colorsWithFuncs = VectorFuncs Color {
+instance colorOps = Ops Color {
   mult: \color1 color2 -> { 
     red: (color1.red * color2.red)
     green: (color1.green * color2.green)
@@ -33,16 +33,45 @@ instance colorsWithFuncs = VectorFuncs Color {
   }
 }
 
-instance vectorsWithFuncs = VectorFuncs Vector {
-  mult:  \vec1 vec2 -> { x: (vec1.x * vec2.x), y: (vec1.y * vec2.y), z: (vec1.z * vec2.z) }
-  add:   \vec1 vec2 -> { x: (vec1.x + vec2.x), y: (vec1.y + vec2.y), z: (vec1.z + vec2.z) }
-  sub:   \vec1 vec2 -> { x: (vec1.x - vec2.x), y: (vec1.y - vec2.y), z: (vec1.z - vec2.z) }
-  div:   \vec1 vec2 -> { x: (vec1.x / vec2.x), y: (vec1.y / vec2.y), z: (vec1.z / vec2.z) }
-  multD: \vec1 double -> { x: (vec1.x * double), y: (vec1.y * double), z: (vec1.z * double) }
-  divD:  \vec1 double -> { x: (vec1.x * double), y: (vec1.y * double), z: (vec1.z * double) }
-  dot:   \vec1 vec2 -> (vec1.x * vec2.x) + (vec1.y * vec2.y) + (vec1.z * vec2.z)
+instance vectorOps = Ops Vector {
+  mult:     \vec1 vec2 -> { x: (vec1.x * vec2.x), y: (vec1.y * vec2.y), z: (vec1.z * vec2.z) }
+  add:      \vec1 vec2 -> { x: (vec1.x + vec2.x), y: (vec1.y + vec2.y), z: (vec1.z + vec2.z) }
+  sub:      \vec1 vec2 -> { x: (vec1.x - vec2.x), y: (vec1.y - vec2.y), z: (vec1.z - vec2.z) }
+  div:      \vec1 vec2 -> { x: (vec1.x / vec2.x), y: (vec1.y / vec2.y), z: (vec1.z / vec2.z) }
+  multD:    \vec1 double -> { x: (vec1.x * double), y: (vec1.y * double), z: (vec1.z * double) }
+  divD:     \vec1 double -> { x: (vec1.x * double), y: (vec1.y * double), z: (vec1.z * double) }
+  dot:      \vec1 vec2 -> (vec1.x * vec2.x) + (vec1.y * vec2.y) + (vec1.z * vec2.z)
 }
 
-let vec1 = { x: 1, y: 2, z: 3 }
-let vec2 = { x: 2, y: 3, z: 4 }
+let intersectRay(ray: Ray)(sphere: Sphere): Number = 
+  let v = sub(sphere.position)(ray.position)
+  let temp = mult(v)(ray.direction)
+  let a = temp.x + temp.y + temp.z
+  let temp2 = mult(v)(v)
+  let b = (temp2.x + temp2.y + temp2.z) - (sphere.radius * sphere.radius)
+  let c = a * a - b 
+  if c >= 0 then
+    //let sqrted = Math.sqrt(c)
+    //a - sqrted
+    a - (Math.sqrt(c))
+  else 
+    (Number.POSITIVE_INFINITY)
+
+let sphere1 = { 
+  position: { x: 1, y: 2, z: 3 }
+  radius: 2.0 
+  color: { 
+    red: 1.0
+    green: 2.0
+    blue: 3.0 
+  }
+  diffuse: { 
+    red: 1.0 
+    green: 2.0
+    blue: 3.0
+   } 
+}
+let ray1 = { position: { x: 2, y: 3, z: 4 }, direction: { x: 1, y: 2, z: 3 } }
+
+console.log (intersectRay(ray1)(sphere1))
 
