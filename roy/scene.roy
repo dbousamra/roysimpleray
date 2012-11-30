@@ -6,6 +6,11 @@ type Ray    = { position: Vector, direction: Vector }
 type Sphere = { position: Vector, radius: Number, color: Color, diffuse: Color }
 type Scene  = { eye: Vector, objects: [Sphere], lights: [Light], ambientLight: Light }
 
+let arrayMonad = {
+  return: \x -> [x]
+  bind: \x f -> Array.prototype.concat.apply [] (x.map f)
+}
+
 typeclass Ops #a {
   mult:          Function(#a, #a, #a)
   add:           Function(#a, #a, #a)
@@ -88,6 +93,17 @@ let rayTrace (scene: Scene)(pixelx: Number)(pixely: Number) =
   let finalColor = getObjectColor scene closestSphere ray
   { x: pixelx, y: pixely, color: finalColor }
 
+
+let traceScene (scene: Scene) =
+  let array1 = [0, 1, 2, 3]
+  let array2 = [4, 5, 6, 7]
+  do arrayMonad
+    x <- array1
+    y <- array2
+    return rayTrace scene x y
+
+
+
 let sphere1 = { 
   position: { x: 22, y: 10, z: 18 }, radius: 2.0 
   color: { red: 1.0, green: 2.0, blue: 3.0 }
@@ -107,4 +123,4 @@ let scene1 = {
   lights: [light1]
   ambientLight: ambientLight1 
 }
-console.log((rayTrace scene1 3 5).color)
+console.log(traceScene scene1)
