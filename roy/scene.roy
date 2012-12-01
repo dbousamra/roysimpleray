@@ -1,4 +1,4 @@
-let _  = require "underscore"
+//let _  = require "underscore"
 type Vector = { x: Number, y: Number, z: Number }
 type Color  = { red: Number, green: Number, blue: Number }
 type Light  = { position: Vector, color: Color }
@@ -88,39 +88,47 @@ let getClosestSphere (ray: Ray)(spheres: [Sphere]) =
 
 
 let rayTrace (scene: Scene)(pixelx: Number)(pixely: Number) = 
-  let ray = { position: { x: pixelx, y: pixely, z: 4 }, direction: normal({ x: 0, y: 0, z: 1 }) }
+  let ray = { position: { x: pixelx, y: pixely, z: -1000 }, direction: normal({ x: 0, y: 0, z: 1 }) }
   let closestSphere = getClosestSphere ray scene.objects
   let finalColor = getObjectColor scene closestSphere ray
   { x: pixelx, y: pixely, color: finalColor }
 
 
-let traceScene (scene: Scene) =
-  let array1 = [0, 1, 2, 3]
-  let array2 = [4, 5, 6, 7]
+let traceScene (scene: Scene)(width: Number)(height: Number) =
+  let array1 = _.range(width)
+  let array2 = _.range(height)
   do arrayMonad
     x <- array1
     y <- array2
     return rayTrace scene x y
 
+let scene1 = {
+   eye: { x:0.0, y:0.0, z:0.0 }
+   objects: [{
+         position:{ x:233.0, y:290.0, z:0.0 }
+         radius:100
+         color: { red:1.0, green:0.0, blue:0.0 }
+         diffuse:{ red:0.0, green:0.1, blue:0.0 }
+      },{
+         position:{ x:407.0, y:290.0, z:100.0 }
+         radius:100
+         color:{ red:0.0, green:1.0, blue:0.0 }
+         diffuse:{ red:0.1, green:0.0, blue:0.1 }
+      },{
+         position:{ x:320.0, y:140.0, z:0.0 }
+         radius:100
+         color:{ red:0.0, green:0.0, blue:1.0 }
+         diffuse:{ red:0.0, green:0.0, blue:0.1 }
+      }]
+   lights:[{
+         position:{ x:-400.0, y:400.0, z:0.0 }
+         color:{red:0.7, green:0.7, blue:0.7 }
+      }]
+   ambientLight:{
+      position:{ x:0.0, y:0.0, z:0.0 }
+      color:{ red:0.3, green:0.3, blue:0.3 }
+   }
+}
 
-
-let sphere1 = { 
-  position: { x: 22, y: 10, z: 18 }, radius: 2.0 
-  color: { red: 1.0, green: 2.0, blue: 3.0 }
-  diffuse: { red: 1.0, green: 2.0, blue: 3.0 }
-}
-let sphere2 = { 
-  position: { x: 21, y: 13, z: 17 }, radius: 3.0 
-  color: { red: 1.0, green: 2.0, blue: 3.0 }
-  diffuse: { red: 1.0, green: 2.0, blue: 3.0 } 
-}
-let light1 = { position: { x: 4, y: 5, z: 6 }, color: { red: 22, green: 33, blue: 33 } }
-let ambientLight1 = { position: { x: 4, y: 5, z: 6 }, color: { red: 22, green: 33, blue: 33 } }
-let ray1 = { position: { x: 2, y: 3, z: 4 }, direction: { x: 1, y: 2, z: 3 } }
-let scene1 = { 
-  eye: { x: 0.0, y: 0.0, z: 0.0 } 
-  objects: [sphere1, sphere2]
-  lights: [light1]
-  ambientLight: ambientLight1 
-}
-console.log(traceScene scene1)
+let traced = traceScene scene1 200 200
+console.log traced 
