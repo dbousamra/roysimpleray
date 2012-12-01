@@ -1,29 +1,102 @@
-let _  = require "underscore"
-import "./scene"
+type Vector = { x: Number, y: Number, z: Number }
+type Color  = { red: Number, green: Number, blue: Number }
+type Light  = { position: Vector, color: Color }
+type Ray    = { position: Vector, direction: Vector }
+type Sphere = { position: Vector, radius: Number, color: Color, diffuse: Color }
+type Scene  = { eye: Vector, objects: [Sphere], lights: [Light], ambientLight: Light }
 
-let sphere1 = { 
-  position: { x: 1, y: 2, z: 3 }
-  radius: 2.0 
-  color: { red: 1.0, green: 2.0, blue: 3.0 }
-  diffuse: { red: 1.0, green: 2.0, blue: 3.0 } 
+let arrayMonad = {
+  return: \x -> [x]
+  bind: \x f -> Array.prototype.concat.apply [] (x.map f)
 }
 
-let sphere2 = { 
-  position: { x: 21, y: 13, z: 17 }
-  radius: 3.0 
-  color: { red: 1.0, green: 2.0, blue: 3.0 }
-  diffuse: { red: 1.0, green: 2.0, blue: 3.0 } 
+typeclass Ops #a {
+  mult:          Function(#a, #a, #a)
+  add:           Function(#a, #a, #a)
+  sub:           Function(#a, #a, #a)
+  div:           Function(#a, #a, #a)
+  multD:         Function(#a, Number, #a)
+  divD:          Function(#a, Number, #a)
+  dot:           Function(#a, #a, Number)
+  toRGB:         Function(#a, #a)
 }
-let light1 = {
-  position: { x: 4, y: 5, z: 6 }
-  color: { red: 22, green: 33, blue: 33 }
-}
-let ambientLight1 = {
-  position: { x: 4, y: 5, z: 6 }
-  color: { red: 22, green: 33, blue: 33 }
-}
-let ray1 = { position: { x: 2, y: 3, z: 4 }, direction: { x: 1, y: 2, z: 3 } }
-//let finalColor = scene.computeColor(12)(ray1)(sphere1)(light1)(ambientLight1)
-//let minned = scene.getClosestSphere(ray1)([sphere1, sphere2])
 
+instance colorOps = Ops Color {
+  mult: \color1 color2 -> { 
+    red: (color1.red * color2.red)
+    green: (color1.green * color2.green)
+    blue: (color1.blue * color2.blue) 
+  }
+  add: \color1 color2 -> { 
+    red: (color1.red + color2.red)
+    green: (color1.green + color2.green)
+    blue: (color1.blue + color2.blue) 
+  }
+  multD: \color1 double -> { 
+    red: (color1.red * double)
+    green: (color1.green * double)
+    blue: (color1.blue * double) 
+  }
+  toRGB: \color -> { red: (color.red * 255), green: (color.green * 255), blue: color.blue * 255 }
+}
 
+instance vectorOps = Ops Vector {
+  mult:  \vec1 vec2 -> { x: (vec1.x * vec2.x), y: (vec1.y * vec2.y), z: (vec1.z * vec2.z) }
+  add:   \vec1 vec2 -> { x: (vec1.x + vec2.x), y: (vec1.y + vec2.y), z: (vec1.z + vec2.z) }
+  sub:   \vec1 vec2 -> { x: (vec1.x - vec2.x), y: (vec1.y - vec2.y), z: (vec1.z - vec2.z) }
+  div:   \vec1 vec2 -> { x: (vec1.x / vec2.x), y: (vec1.y / vec2.y), z: (vec1.z / vec2.z) }
+  multD: \vec1 double -> { x: (vec1.x * double), y: (vec1.y * double), z: (vec1.z * double) }
+  divD:  \vec1 double -> { x: (vec1.x / double), y: (vec1.y / double), z: (vec1.z / double) }
+  dot:   \vec1 vec2 -> (vec1.x * vec2.x) + (vec1.y * vec2.y) + (vec1.z * vec2.z)
+}
+
+let intersectRay (ray:Ray)(sphere:Sphere): Number = 
+  let v = sub sphere.position ray.position 
+  let temp = mult v ray.direction
+  let a = temp.x + temp.y + temp.z
+  let temp2 = mult v v
+  let b = (temp2.x + temp2.y + temp2.z) - (sphere.radius * sphere.radius)
+  let c = a * a - b 
+  if c >= 0 then
+    a - (Math.sqrt c)
+  else 
+    (Number.POSITIVE_INFINITY)
+
+let length vec1 = Math.sqrt(lengthSquared vec1)
+let normal vec1 = divD vec1 (length vec1)
+let lengthSquared (vec1: Vector) = 
+  let t = mult vec1 vec1
+  t.x + t.y + t.z 
+
+let computeColor (hitAngle: Number)(ray: Ray)(sphere: Sphere)(light: Light)(ambientLight: Light) = 
+  if hitAngle == (Number.POSITIVE_INFINITY) then
+    { red: 1.0, green: 1.0, blue: 1.0}
+  else
+    let vectorCoefficent = add ray.position (multD ray.direction hitAngle)
+    let lightCoefficent = normal(sub light.position sphere.position)
+    let positionCoefficient = normal(sub vectorCoefficent sphere.position)
+    let t = mult(lightCoefficent)(positionCoefficient)
+    let shadedCoefficient = t.x + t.y + t.z 
+    //Is this LISP?
+    mult(sphere.color)(add(multD(light.color)(Math.max shadedCoefficient 0))(ambientLight.color)) 
+
+let getObjectColor (scene: Scene)(object: Sphere)(ray: Ray): Color =
+  let hitAngle = intersectRay ray object
+  computeColor hitAngle ray object scene.lights @ 0 scene.ambientLight
+
+let getClosestSphere (ray: Ray)(spheres: [Sphere]) =
+ _.head(_.sortBy(spheres)(\s -> intersectRay ray s))
+
+let rayTrace (scene: Scene)(pixelx: Number)(pixely: Number) = 
+  let ray = { position: { x: pixelx, y: pixely, z: -1000 }, direction: normal({ x: 0, y: 0, z: 1 }) }
+  let closestSphere = getClosestSphere ray scene.objects
+  let finalColor = getObjectColor scene closestSphere ray
+  { x: pixelx, y: pixely, color: toRGB(finalColor) }
+
+let traceScene (scene: Scene)(width: Number)(height: Number) =
+  let array1 = _.range(height)
+  let array2 = _.range(width)
+  do arrayMonad
+    y <- array1
+    x <- array2
+    return rayTrace scene x y
