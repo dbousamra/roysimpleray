@@ -1,4 +1,3 @@
-//let _  = require "underscore"
 type Vector = { x: Number, y: Number, z: Number }
 type Color  = { red: Number, green: Number, blue: Number }
 type Light  = { position: Vector, color: Color }
@@ -19,6 +18,7 @@ typeclass Ops #a {
   multD:         Function(#a, Number, #a)
   divD:          Function(#a, Number, #a)
   dot:           Function(#a, #a, Number)
+  toRGB:         Function(#a, #a)
 }
 
 instance colorOps = Ops Color {
@@ -37,6 +37,7 @@ instance colorOps = Ops Color {
     green: (color1.green * double)
     blue: (color1.blue * double) 
   }
+  toRGB: \color -> { red: (color.red * 255), green: (color.green * 255), blue: color.blue * 255 }
 }
 
 instance vectorOps = Ops Vector {
@@ -69,9 +70,9 @@ let lengthSquared (vec1: Vector) =
 
 let computeColor (hitAngle: Number)(ray: Ray)(sphere: Sphere)(light: Light)(ambientLight: Light) = 
   if hitAngle == (Number.POSITIVE_INFINITY) then
-    { red: 0, green: 0, blue: 0}
+    { red: 1.0, green: 1.0, blue: 1.0}
   else
-    let vectorCoefficent = multD(add ray.position ray.direction) hitAngle
+    let vectorCoefficent = add ray.position (multD ray.direction hitAngle)
     let lightCoefficent = normal(sub light.position sphere.position)
     let positionCoefficient = normal(sub vectorCoefficent sphere.position)
     let t = mult(lightCoefficent)(positionCoefficient)
@@ -86,49 +87,16 @@ let getObjectColor (scene: Scene)(object: Sphere)(ray: Ray): Color =
 let getClosestSphere (ray: Ray)(spheres: [Sphere]) =
  _.head(_.sortBy(spheres)(\s -> intersectRay ray s))
 
-
 let rayTrace (scene: Scene)(pixelx: Number)(pixely: Number) = 
   let ray = { position: { x: pixelx, y: pixely, z: -1000 }, direction: normal({ x: 0, y: 0, z: 1 }) }
   let closestSphere = getClosestSphere ray scene.objects
   let finalColor = getObjectColor scene closestSphere ray
-  { x: pixelx, y: pixely, color: finalColor }
-
+  { x: pixelx, y: pixely, color: toRGB(finalColor) }
 
 let traceScene (scene: Scene)(width: Number)(height: Number) =
-  let array1 = _.range(width)
-  let array2 = _.range(height)
+  let array1 = _.range(height)
+  let array2 = _.range(width)
   do arrayMonad
-    x <- array1
-    y <- array2
+    y <- array1
+    x <- array2
     return rayTrace scene x y
-
-let scene1 = {
-   eye: { x:0.0, y:0.0, z:0.0 }
-   objects: [{
-         position:{ x:233.0, y:290.0, z:0.0 }
-         radius:100
-         color: { red:1.0, green:0.0, blue:0.0 }
-         diffuse:{ red:0.0, green:0.1, blue:0.0 }
-      },{
-         position:{ x:407.0, y:290.0, z:100.0 }
-         radius:100
-         color:{ red:0.0, green:1.0, blue:0.0 }
-         diffuse:{ red:0.1, green:0.0, blue:0.1 }
-      },{
-         position:{ x:320.0, y:140.0, z:0.0 }
-         radius:100
-         color:{ red:0.0, green:0.0, blue:1.0 }
-         diffuse:{ red:0.0, green:0.0, blue:0.1 }
-      }]
-   lights:[{
-         position:{ x:-400.0, y:400.0, z:0.0 }
-         color:{red:0.7, green:0.7, blue:0.7 }
-      }]
-   ambientLight:{
-      position:{ x:0.0, y:0.0, z:0.0 }
-      color:{ red:0.3, green:0.3, blue:0.3 }
-   }
-}
-
-let traced = traceScene scene1 200 200
-console.log traced 

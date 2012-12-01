@@ -11,32 +11,12 @@
     </style>
 </head>
 <body>
-
-  <div class="navbar navbar-inverse navbar-fixed-top">
-    <div class="navbar-inner">
-      <div class="container">
-        <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </a>
-        <a class="brand" href="#">Project name</a>
-        <div class="nav-collapse collapse">
-          <ul class="nav">
-            <li class="active"><a href="#">Home</a></li>
-            <li><a href="#about">About</a></li>
-            <li><a href="#contact">Contact</a></li>
-          </ul>
-        </div><!--/.nav-collapse -->
-      </div>
-    </div>
-  </div>
-
   <div class="container">
 
     <div class="row">
+      <h1>A basic raytracer built using <a href="http://roy.brianmckenna.org/">Roy</a></h1>
+      <p class="lead">Edit the scene and see changes</p>
       <div class="span6">
-        <h1>JSON</h1>
         <div >
           <textarea id="jsoncode" name="code" style="display: none;">
 {
@@ -104,12 +84,12 @@
   "lights":[
     {
       "position":{
-        "x":-400.0,
-        "y":400.0,
+        "x":-200.0,
+        "y":200.0,
         "z":0.0
       },
       "color":{
-        "red":0.7,
+        "red":0.9,
         "green":0.7,
         "blue":0.7
       }
@@ -122,24 +102,21 @@
       "z":0.0
     },
     "color":{
-      "red":0.3,
-      "green":0.3,
-      "blue":0.3
+      "red":0.2,
+      "green":0.5,
+      "blue":0.6
     }
   }
 }
           </textarea>
         </div>
       </div>
-
       <div class="span6">
-        <h1>Traced</h1>
-        <div id="traced">
-          <h2>stuff</h2>
-        </div>
+        <canvas id="traced" width="640" height="480" >  
+        </canvas>  
       </div>
+      <p>Created by <a href="https://github.com/dbousamra">dbousamra</a>. Source on <a href="https://github.com/dbousamra/roysimpleray">Github</a></p>
     </div>
-
   </div> <!-- /container -->
   
   <script type="text/javascript" src="lib/jquery-1.8.3.js"></script>
@@ -151,27 +128,44 @@
   <script type="text/javascript" src="roy/scene.js"></script>
 
   <script type="text/javascript">
-      var delay;
-
+      var context = document.getElementById("traced").getContext("2d");
+      var width  = 640;
+      var height = 480;
+      var imageData = context.createImageData(width, height);
+      
       var editor = CodeMirror.fromTextArea(document.getElementById("jsoncode"), {
         mode: {name: "javascript", json: true},
         matchBrackets: true,
         extraKeys: {"Enter": "newlineAndIndentContinueComment"},
         onChange: function() {
           clearTimeout(delay);
-          delay = setTimeout(updatePreview, 300);
+          var delay = setTimeout(updatePreview, 1000);
         }
       });
 
       function updatePreview() {
-        var preview =  $('div#traced').text(editor.getValue())
-        // preview.open();
-        // preview.write(editor.getValue());
-        // preview.close();
+        console.log("Updating");
+        var scene = $.parseJSON(editor.getValue());
+        var tracedScene = traceScene(scene, width, height);
+        drawTracedScene(tracedScene);
+        $('div#traced').text(editor.getValue())
       }
-      setTimeout(updatePreview, 300);
-    
+
+      function drawTracedScene(tracedScene) {
+        console.log("Drawing scene");
+        var imageData = context.createImageData(width, height);
+        var numPixels = width*height;
+        for (var i = 0; i < numPixels; i++) {
+          imageData.data[(i*4)]     = tracedScene[i].color.red;
+          imageData.data[(i*4) + 1] = tracedScene[i].color.green;
+          imageData.data[(i*4) + 2] = tracedScene[i].color.blue;
+          imageData.data[(i*4) + 3] = 255; // alpha  color
+        };
+        context.putImageData(imageData, 0, 0);
+      }
+      setTimeout(updatePreview, 1000);
   </script>
+
   <style type="text/css">
     .CodeMirror-scroll {
       height: 400px;
